@@ -22,8 +22,8 @@ python3 -m spacy download en_core_web_md [required for tokenisation]
 conda install networkx [required for Draw]
 pip install matplotlib==2.2.3 [required for Draw]
 pip install yattag [required for XML]
-pip install torch
-pip install torch_geometric [required for PyG]
+pip install torch [required for vectoriseComputation]
+pip install torch_geometric [required for vectoriseComputation:PyG]
 ```
 
 ### Execution
