@@ -55,7 +55,7 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 		if(selectActivatedTop):
 			layerSANINodeListAssociated = []
 		for x2, SANINeuron2 in enumerate(layerSANINodeList):
-			if(x1 != x2 and x2 > x1):	#x2 > x1; ensures that replicate SANI nodes are not added to network (with input swapped)
+			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
 				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuron1, SANINeuron2)):
 					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2)
 				connection = SANINeuron1.HFtargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
@@ -78,13 +78,15 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 				layerSANINodeListAssociatedTopK.append(connection.nodeTarget)
 		else:
 			layerSANINodeListAssociatedTopK = None
+		foundAssociation = False
 		for x2, SANINeuron2 in enumerate(layerSANINodeList):
-			if(x1 != x2 and x2 > x1):
+			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
 				if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
 					if(checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK)):
 						connection = SANINeuron1.HFtargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
 						if(connection.SANIassociationStrength >= SANInodeGenerationHFassociationThreshold):
 							addNodeToNextLayer = True
+							foundAssociation = True
 							if(not connection.SANInodeAssigned):
 								if(generateSANINetwork):
 									connection.SANInodeAssigned = True
@@ -97,6 +99,7 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 										wApprox = SANINeuron2.w #wContiguityEnforced
 									nodeGraphType = graphNodeTypeSANIhidden
 									connection.SANInode = HopfieldNode(layerNetworkIndex, nodeName, nodeGraphType, w=wApprox)
+									connection.SANInode.SANIlayerIndex = layerIndex+1
 									connection.SANInode.SANIlayerNeuronID = layerNetworkIndex
 									networkSANINodeList.append(connection.SANInode)
 									layerNetworkIndex += 1
@@ -106,8 +109,27 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 								connection.SANIactivationState = True
 								connection.SANInode.SANIactivationState = True
 								sentenceSANINodeList.append(connection.SANInode)
+		if(enableSkipLayerConnectivity):
+			if(not foundAssociation):
+				sentenceSANINodeList.append(SANINeuron1)	#append unassociated node to buffer so that it can still be referenced in future layers
+				
 	SANIlayerList[layerIndex+1].sentenceSANINodeList = sentenceSANINodeList
 
+def checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex):
+	result = False
+	if(enableSkipLayerConnectivity):
+		if((SANINeuron1.SANIlayerIndex == layerIndex) or (SANINeuron2.SANIlayerIndex == layerIndex)):	#at least one node is on the current layer
+			result = True
+	else:
+		result = True
+	return result
+	
+def checkNonReplicateAssociation(x1, x2):
+	result = False
+	if(x1 != x2 and x2 > x1):	#x2 > x1; ensures that replicate SANI nodes are not added to network (with input swapped)
+		result = True	
+	return result
+	
 def checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK):
 	associationTopKChecks = False
 	if(selectActivatedTop):

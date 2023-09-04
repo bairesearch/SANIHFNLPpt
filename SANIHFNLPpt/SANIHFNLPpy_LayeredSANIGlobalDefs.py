@@ -28,6 +28,7 @@ if(debugLowActivationThresholds):
 	SANInumberOfLayersMax = 3
 else:
 	SANInumberOfLayersMax = 6	#max number of SANI layers to generate
+enableSkipLayerConnectivity = True	#keep lower layer associated nodes in the buffer so that they can still be used to generate new SANI nodes
 
 #### topk selection ####
 

@@ -163,6 +163,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			conceptNode = HopfieldNode(networkIndex, nodeName, nodeGraphType, wordVector, w, sentenceIndex)
 			if(useAlgorithmLayeredSANIbiologicalSimulation):
 				conceptNode.SANIlayerNeuronID = networkIndex
+				conceptNode.SANIlayerIndex = 0
 			if(useAlgorithmScanBiologicalSimulation):
 				neuronNamelist.append(nodeName)
 				neuronID = networkIndex

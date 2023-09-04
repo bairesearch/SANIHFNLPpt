@@ -25,7 +25,7 @@ from SANIHFNLPpy_LayeredSANIGlobalDefs import *
 
 def layeredSANINodePropertiesInitialisation(node):
 	node.SANIlayerNeuronID = 0
-	node.SANIlayer = 0
+	node.SANIlayerIndex = 0
 	node.SANIactivationState = False
 	node.activationStatePartial = False	#highlightPartialActivations only (incomplete)
 	#node.SANIsequentialInputActiveList = []	#records if sequential inputs are active
