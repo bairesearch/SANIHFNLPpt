@@ -40,7 +40,7 @@ def updateLayeredSANIgraph(SANIlayerList, sentenceIndex):
 		if(layerIndex < SANInumberOfLayersMax-1):	#ensure that higher layer SANI nodes can still be added
 			#print("layerIndex = ", layerIndex)
 			updateLayeredSANIlayer(SANIlayerList, layerIndex, layer.sentenceSANINodeList, generateSANINetwork=True)
-
+	
 	if(drawBiologicalSimulation):
 		SANIHFNLPpy_LayeredSANIDraw.drawLayeredSANIStatic(SANIlayerList, sentenceIndex)
 
@@ -98,6 +98,7 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 									nodeGraphType = graphNodeTypeSANIhidden
 									connection.SANInode = HopfieldNode(layerNetworkIndex, nodeName, nodeGraphType, w=wApprox)
 									connection.SANInode.SANIlayerNeuronID = layerNetworkIndex
+									networkSANINodeList.append(connection.SANInode)
 									layerNetworkIndex += 1
 								else:
 									addToNextLayer = False
@@ -105,7 +106,6 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 								connection.SANIactivationState = True
 								connection.SANInode.SANIactivationState = True
 								sentenceSANINodeList.append(connection.SANInode)
-								networkSANINodeList.append(connection.SANInode)
 	SANIlayerList[layerIndex+1].sentenceSANINodeList = sentenceSANINodeList
 
 def checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK):
