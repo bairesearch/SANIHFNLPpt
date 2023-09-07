@@ -37,4 +37,7 @@ class SANIlayer:
 		self.layerIndex = layerIndex
 		self.sentenceSANINodeList = []
 		self.networkSANINodeList = []
+		if(vectoriseComputation):
+			#layerBufferSANIconnectionTensor
+			self.networkConnectionStrengthDict = {}
 		

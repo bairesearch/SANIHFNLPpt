@@ -30,7 +30,10 @@ if(highResolutionFigure):
 	saveFigDPI = 300	#approx HD	#depth per inch
 	saveFigSize = (16,9)	#in inches
 	
-drawLayeredSANIGraphEdgeColoursWeights = True
+drawLayeredSANIGraphEdgeColours = True
+drawLayeredSANIGraphEdgeWeights = False
+if(drawLayeredSANIGraphEdgeColours or drawLayeredSANIGraphEdgeWeights):
+	drawLayeredSANIGraphEdgeColoursWeights = True
 drawLayeredSANIGraphNodeColours = True	#node colours not yet coded (pos type of SANI node will be different depending on connectivity/instance context)
 graphTransparency = 0.5
 
@@ -118,13 +121,15 @@ def drawLayeredSANIGraphNetwork(SANIlayerList, activationTime=None, wTarget=None
 			drawLayeredSANIGraphNodeConnections(layerIndex, nodeIndex, SANINode, drawGraphNetwork)
 
 def drawLayeredSANIGraphNodeConnections(layerIndex, nodeIndex, layeredSANIGraphNode, drawGraphNetwork, sentenceSANINodeList=None):
-	for connectionKey, connection in layeredSANIGraphNode.HFtargetConnectionDict.items():
+	for connectionKey, connection in layeredSANIGraphNode.HFcontextTargetConnectionDict.items():
 		drawHFGraphConnection(layerIndex, connection, drawGraphNetwork, sentenceSANINodeList)
 		if(connection.SANInodeAssigned):
 			if(drawGraphNetwork or connection.SANIactivationState):
 				if(drawGraphNetwork or ((connection.nodeSource in sentenceSANINodeList) and (connection.nodeTarget in sentenceSANINodeList))):
-					drawLayeredSANIGraphConnection(connection.nodeSource, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
-					drawLayeredSANIGraphConnection(connection.nodeTarget, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
+					drawLayeredSANIGraphConnection(connection, connection.nodeSource, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
+					drawLayeredSANIGraphConnection(connection, connection.nodeTarget, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
+	for connectionKey, connection in layeredSANIGraphNode.HFcausalTargetConnectionDict.items():
+		drawHFGraphConnection(layerIndex, connection, drawGraphNetwork, sentenceSANINodeList)
 	#for outputNode in layeredSANIGraphNode.SANIoutputNodeList:
 	#	drawLayeredSANIGraphConnection(layeredSANIGraphNode, outputNode, drawGraphNetwork, sentenceSANINodeList)
 			
@@ -156,18 +161,33 @@ def drawHFGraphConnection(layerIndex, connection, drawGraphNetwork, sentenceSANI
 	node1 = connection.nodeSource
 	node2 = connection.nodeTarget
 	if(drawGraphNetwork or (node2 in sentenceSANINodeList)):	#if HFNLPpy_DendriticSANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawLayeredSANIGraphNodeConnections
+		if(drawLayeredSANIGraphEdgeColours):
+			if(connection.contextConnection):
+				color = getActivationColor(connection, 'gold', 'orange', 'darkorange', highlightPartialActivations=True)
+			else:
+				color = getActivationColor(connection, 'lightred', 'red', 'darkred', highlightPartialActivations=True)
+		else:
+			color = 'black'
+		if(drawLayeredSANIGraphEdgeWeights):
+			weight = connection.weight
+		else:
+			weight = 1.0
 		if(drawLayeredSANIGraphEdgeColoursWeights):
-			color = getActivationColor(connection, 'yellow', 'orange', 'green', highlightPartialActivations=True)
-			weight = 1.0				
 			layeredSANIGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 		else:
 			layeredSANIGraph.add_edge(node1.nodeName, node2.nodeName)
 
-def drawLayeredSANIGraphConnection(inputNode, outputNode, drawGraphNetwork, sentenceSANINodeList=None):
+def drawLayeredSANIGraphConnection(connection, inputNode, outputNode, drawGraphNetwork, sentenceSANINodeList=None):
 	#if(drawGraphNetwork or (outputNode in sentenceSANINodeList)):	#if HFNLPpy_DendriticSANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawLayeredSANIGraphNodeConnections
+	if(drawLayeredSANIGraphEdgeColours):
+		color = getActivationColor(outputNode, 'lightblue', 'blue', 'darkblue', highlightPartialActivations=False)
+	else:
+		color = 'black'
+	if(drawLayeredSANIGraphEdgeWeights):
+		weight = connection.weight
+	else:
+		weight = 1.0
 	if(drawLayeredSANIGraphEdgeColoursWeights):
-		color = getActivationColor(outputNode, 'yellow', 'orange', 'blue', highlightPartialActivations=False)
-		weight = 1.0				
 		layeredSANIGraph.add_edge(inputNode.nodeName, outputNode.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 	else:
 		layeredSANIGraph.add_edge(inputNode.nodeName, outputNode.nodeName)

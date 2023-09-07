@@ -37,40 +37,60 @@ if(drawBiologicalSimulation):
 
 def updateLayeredSANIgraph(SANIlayerList, sentenceIndex):
 	for layerIndex, layer in enumerate(SANIlayerList):
-		if(layerIndex < SANInumberOfLayersMax-1):	#ensure that higher layer SANI nodes can still be added
+		if(layerIndex < SANInumberOfLayersMax):	#ensure that higher layer SANI nodes can still be added
 			#print("layerIndex = ", layerIndex)
-			updateLayeredSANIlayer(SANIlayerList, layerIndex, layer.sentenceSANINodeList, generateSANINetwork=True)
-	
+			if(layerIndex < SANInumberOfLayersMax-1):
+				if(vectoriseComputation):
+					updateLayeredSANIlayerVectorised(SANIlayerList, layerIndex, layer, generateSANINetwork=True)
+				else:
+					updateLayeredSANIlayerStandard(SANIlayerList, layerIndex, layer, generateSANINetwork=True)
+			else:
+				if(enableNextWordCausalPredictions):
+					recordNextWordCausalPredictions(layer)
+				
 	if(drawBiologicalSimulation):
 		SANIHFNLPpy_LayeredSANIDraw.drawLayeredSANIStatic(SANIlayerList, sentenceIndex)
 
 	clearNetworkActivations(SANIlayerList)
 
-def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generateSANINetwork=True):
-	#print("len(layerSANINodeList) = ", len(layerSANINodeList))
+def recordNextWordCausalPredictions(layer):
+	layerBufferSANINodeList = layer.sentenceSANINodeList
+	layerBufferSANINodeList.sort(key=lambda x: x.w)
+	SANINeuronPrev = None
+	for x1, SANINeuron in enumerate(layerBufferSANINodeList):
+		if(x1>0):
+			if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuronPrev, SANINeuron, False)):
+				HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuronPrev, SANINeuron, contextConnection=False)
+			connection = SANINeuronPrev.HFcausalTargetConnectionDict[SANINeuron.SANIlayerNeuronID]
+			connection.weight += 1
+		SANINeuronPrev = SANINeuron
+
+def updateLayeredSANIlayerStandard(SANIlayerList, layerIndex, layer, generateSANINetwork=True):
+	layerBufferSANINodeList = layer.sentenceSANINodeList
+	#print("len(layerBufferSANINodeList) = ", len(layerBufferSANINodeList))
 	sentenceSANINodeList = []
 	networkSANINodeList = SANIlayerList[layerIndex+1].networkSANINodeList
 	layerNetworkIndex = len(networkSANINodeList)
-	for x1, SANINeuron1 in enumerate(layerSANINodeList):
+	for x1, SANINeuron1 in enumerate(layerBufferSANINodeList):
 		if(selectActivatedTop):
 			layerSANINodeListAssociated = []
-		for x2, SANINeuron2 in enumerate(layerSANINodeList):
+		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
 			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
-				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuron1, SANINeuron2)):
-					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2)
-				connection = SANINeuron1.HFtargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
+				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuron1, SANINeuron2, True)):
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2, contextConnection=True)
+				connection = SANINeuron1.HFcontextTargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
 				if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
 					if(HFassociationStrengthProximityBias):
-						HFproximity = calculateHFproximity(layerSANINodeList, SANINeuron1, SANINeuron2)
+						HFproximity = calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2)
 						#print("HFproximity = ", HFproximity)
-						connection.SANIassociationStrength += HFproximity
+						connection.weight += HFproximity
 					else:
-						connection.SANIassociationStrength += 1
+						connection.weight += 1
 					if(selectActivatedTop):
-						if(connection.SANIassociationStrength > SANInodeGenerationHFassociationThreshold):
+						if(connection.weight > SANInodeGenerationHFassociationThreshold):
 							layerSANINodeListAssociated.append(connection)
 		if(selectActivatedTop):
-			layerSANINodeListAssociated.sort(key=lambda x: x.SANIassociationStrength)
+			layerSANINodeListAssociated.sort(key=lambda x: x.weight)
 			selectActivatedTopKChecked = min([selectActivatedTopK, len(layerSANINodeListAssociated)])
 			layerSANINodeListAssociated = layerSANINodeListAssociated[0:selectActivatedTopKChecked]
 			layerSANINodeListAssociatedTopK = []
@@ -79,12 +99,12 @@ def updateLayeredSANIlayer(SANIlayerList, layerIndex, layerSANINodeList, generat
 		else:
 			layerSANINodeListAssociatedTopK = None
 		foundAssociation = False
-		for x2, SANINeuron2 in enumerate(layerSANINodeList):
+		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
 			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
 				if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
 					if(checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK)):
-						connection = SANINeuron1.HFtargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
-						if(connection.SANIassociationStrength >= SANInodeGenerationHFassociationThreshold):
+						connection = SANINeuron1.HFcontextTargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
+						if(connection.weight >= SANInodeGenerationHFassociationThreshold):
 							addNodeToNextLayer = True
 							foundAssociation = True
 							if(not connection.SANInodeAssigned):
@@ -152,8 +172,8 @@ def generateSANInodeName(layerIndex, layerNetworkIndex):
 	nodeName = "l" + str(layerIndex) + "n" + str(layerNetworkIndex)
 	return layerNetworkIndex, nodeName
 
-def calculateHFproximity(layerSANINodeList, SANINeuron1, SANINeuron2):
-	HFproximity = ((len(layerSANINodeList) - min(len(layerSANINodeList), abs(SANINeuron1.w - SANINeuron2.w))) / len(layerSANINodeList)) * HFassociationStrengthProximityBiasLevel
+def calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2):
+	HFproximity = ((len(layerBufferSANINodeList) - min(len(layerBufferSANINodeList), abs(SANINeuron1.w - SANINeuron2.w))) / len(layerBufferSANINodeList)) * HFassociationStrengthProximityBiasLevel
 	return HFproximity
 	
 def clearNetworkActivations(SANIlayerList):
@@ -161,8 +181,8 @@ def clearNetworkActivations(SANIlayerList):
 		for nodeIndex, SANINode in enumerate(layer.networkSANINodeList):
 			#print("layerIndex = ", layerIndex)
 			SANINode.SANIactivationState = False
-			for connectionKey, connection in SANINode.HFtargetConnectionDict.items():
+			for connectionKey, connection in SANINode.HFcontextTargetConnectionDict.items():
 				if(HFassociationStrengthAtrophy):
-					connection.SANIassociationStrength += HFassociationStrengthAtrophy
+					connection.weight += HFassociationStrengthAtrophy
 				connection.SANIactivationState = False
 				

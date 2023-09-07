@@ -30,6 +30,7 @@ else:
 	SANInumberOfLayersMax = 6	#max number of SANI layers to generate
 enableSkipLayerConnectivity = True	#keep lower layer associated nodes in the buffer so that they can still be used to generate new SANI nodes
 
+	
 #### topk selection ####
 
 if(debugLowActivationThresholds):
@@ -55,6 +56,11 @@ HFassociationStrengthAtrophy = False
 if(HFassociationStrengthAtrophy):
 	HFassociationStrengthAtrophy = 0.1
 
+enableNextWordCausalPredictions = False #initialise (dependent var)
+if(enableSkipLayerConnectivity):
+	if(not HFassociationPermutationInvariance):	#enableNextWordCausalPredictions does not currently support HFassociationPermutationInvariance (non-contiguous SANI node input)
+		enableNextWordCausalPredictions = True
+	
 #### computation type ####
 
 vectoriseComputation = False	#parallel processing for optimisation	#incomplete (requires pytorch implementation for graph traversal/update)

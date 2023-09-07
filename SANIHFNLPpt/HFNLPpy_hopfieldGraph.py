@@ -244,7 +244,7 @@ def connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, DPg
 		previousContextConceptNodesList = []
 		conceptNode, previousConceptNode = identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalPrototype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList)
 		createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
-		connectHopfieldGraphSentence(sentenceConceptNodeList, DPdependentNode, spatioTemporalIndex, activationTime)
+		connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, DPdependentNode, spatioTemporalIndex, activationTime)
 
 def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalPrototype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList):
 	conceptNode = sentenceConceptNodeList[DPgovernorNode.w]
@@ -258,7 +258,7 @@ def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalPrototype(sentenceConc
 
 
 def createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime):
-	HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode)
+	HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode, contextConnection=False)
 	#HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 	
 	if(useAlgorithmDendriticSANIbiologicalPrototype):
