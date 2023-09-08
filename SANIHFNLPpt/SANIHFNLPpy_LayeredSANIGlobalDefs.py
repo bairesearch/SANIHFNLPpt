@@ -56,11 +56,15 @@ HFassociationStrengthAtrophy = False
 if(HFassociationStrengthAtrophy):
 	HFassociationStrengthAtrophy = 0.1
 
-enableNextWordCausalPredictions = False #initialise (dependent var)
+#initialise (dependent vars)
+enableNextWordCausalPredictions = False 
+enableNextWordCausalPredictionsPermutationInvariance = False
+
 if(enableSkipLayerConnectivity):
-	if(not HFassociationPermutationInvariance):	#enableNextWordCausalPredictions does not currently support HFassociationPermutationInvariance (non-contiguous SANI node input)
-		enableNextWordCausalPredictions = True
-	
+	enableNextWordCausalPredictions = True		#enableNextWordCausalPredictions does not properly support HFassociationPermutationInvariance (non-contiguous SANI node input)	#limited support for HFassociationPermutationInvariance
+	if(HFassociationPermutationInvariance):
+		enableNextWordCausalPredictionsPermutationInvariance = True	#restrict associations of central contents of non-contiguous-input SANI node to central contents
+
 #### computation type ####
 
 vectoriseComputation = False	#parallel processing for optimisation	#incomplete (requires pytorch implementation for graph traversal/update)

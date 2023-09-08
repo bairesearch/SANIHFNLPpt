@@ -31,7 +31,16 @@ def layeredSANINodePropertiesInitialisation(node):
 	#node.SANIsequentialInputActiveList = []	#records if sequential inputs are active
 	node.SANIinputNodeList = []	#sequential input nodes (lower layer)
 	node.SANIoutputNodeList = []	#output nodes (higher layer)
+	node.SANIcontiguousInput = False
 	
+	#sentence artificial vars (for sentence graph only, do not generalise to network graph);
+	node.wMin = node.w
+	node.wMax = node.w
+	node.noncontinguousInputNodeAboveCentralContentsStart = False
+	node.noncontinguousInputNodeAboveCentralContentsEnd = False
+	node.noncontinguousInputNodeAbove = None
+							
+
 class SANIlayer:
 	def __init__(self, layerIndex):
 		self.layerIndex = layerIndex

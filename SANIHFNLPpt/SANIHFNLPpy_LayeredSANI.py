@@ -55,14 +55,21 @@ def updateLayeredSANIgraph(SANIlayerList, sentenceIndex):
 
 def recordNextWordCausalPredictions(layer):
 	layerBufferSANINodeList = layer.sentenceSANINodeList
-	layerBufferSANINodeList.sort(key=lambda x: x.w)
+	layerBufferSANINodeList.sort(key=lambda x: x.wMin)
 	SANINeuronPrev = None
 	for x1, SANINeuron in enumerate(layerBufferSANINodeList):
-		if(x1>0):
-			if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuronPrev, SANINeuron, False)):
-				HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuronPrev, SANINeuron, contextConnection=False)
-			connection = SANINeuronPrev.HFcausalTargetConnectionDict[SANINeuron.SANIlayerNeuronID]
-			connection.weight += 1
+		if(x1 > 0):
+			if(not SANINeuron.noncontinguousInputNodeAboveCentralContentsStart):
+				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuronPrev, SANINeuron, False)):
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuronPrev, SANINeuron, contextConnection=False)
+				connection = SANINeuronPrev.HFcausalTargetConnectionDict[SANINeuron.SANIlayerNeuronID]
+				connection.weight += 1
+			if(SANINeuron.noncontinguousInputNodeAboveCentralContentsEnd):
+				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuron, SANINeuron.noncontinguousInputNodeAbove, False)):
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron, SANINeuron.noncontinguousInputNodeAbove, contextConnection=False)
+				connection = SANINeuron.HFcausalTargetConnectionDict[SANINeuron.noncontinguousInputNodeAbove.SANIlayerNeuronID]
+				connection.SANIoptionalCausalConnection = True
+				connection.weight += 1
 		SANINeuronPrev = SANINeuron
 
 def updateLayeredSANIlayerStandard(SANIlayerList, layerIndex, layer, generateSANINetwork=True):
@@ -75,20 +82,19 @@ def updateLayeredSANIlayerStandard(SANIlayerList, layerIndex, layer, generateSAN
 		if(selectActivatedTop):
 			layerSANINodeListAssociated = []
 		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
-			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
+			if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
 				if(not HFNLPpy_hopfieldOperations.connectionExists(SANINeuron1, SANINeuron2, True)):
 					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2, contextConnection=True)
 				connection = SANINeuron1.HFcontextTargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
-				if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
-					if(HFassociationStrengthProximityBias):
-						HFproximity = calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2)
-						#print("HFproximity = ", HFproximity)
-						connection.weight += HFproximity
-					else:
-						connection.weight += 1
-					if(selectActivatedTop):
-						if(connection.weight > SANInodeGenerationHFassociationThreshold):
-							layerSANINodeListAssociated.append(connection)
+				if(HFassociationStrengthProximityBias):
+					HFproximity = calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2)
+					#print("HFproximity = ", HFproximity)
+					connection.weight += HFproximity
+				else:
+					connection.weight += 1
+				if(selectActivatedTop):
+					if(connection.weight > SANInodeGenerationHFassociationThreshold):
+						layerSANINodeListAssociated.append(connection)
 		if(selectActivatedTop):
 			layerSANINodeListAssociated.sort(key=lambda x: x.weight)
 			selectActivatedTopKChecked = min([selectActivatedTopK, len(layerSANINodeListAssociated)])
@@ -100,41 +106,60 @@ def updateLayeredSANIlayerStandard(SANIlayerList, layerIndex, layer, generateSAN
 			layerSANINodeListAssociatedTopK = None
 		foundAssociation = False
 		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
-			if(checkNonReplicateAssociation(x1, x2) and checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
-				if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
-					if(checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK)):
-						connection = SANINeuron1.HFcontextTargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
-						if(connection.weight >= SANInodeGenerationHFassociationThreshold):
-							addNodeToNextLayer = True
-							foundAssociation = True
-							if(not connection.SANInodeAssigned):
-								if(generateSANINetwork):
-									connection.SANInodeAssigned = True
-									layerNetworkIndex, nodeName = generateSANInodeName(layerIndex+1, layerNetworkIndex)
-									if(printVerbose):
-										print("create new conceptNode; ", nodeName)
-									if(HFassociationPermutationInvariance):
-										wApprox = abs(SANINeuron1.w - SANINeuron2.w)
-									else:
-										wApprox = SANINeuron2.w #wContiguityEnforced
-									nodeGraphType = graphNodeTypeSANIhidden
-									connection.SANInode = HopfieldNode(layerNetworkIndex, nodeName, nodeGraphType, w=wApprox)
-									connection.SANInode.SANIlayerIndex = layerIndex+1
-									connection.SANInode.SANIlayerNeuronID = layerNetworkIndex
-									networkSANINodeList.append(connection.SANInode)
-									layerNetworkIndex += 1
-								else:
-									addToNextLayer = False
-							if(addNodeToNextLayer):
-								connection.SANIactivationState = True
-								connection.SANInode.SANIactivationState = True
-								sentenceSANINodeList.append(connection.SANInode)
+			if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
+				if(checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK)):
+					connection = SANINeuron1.HFcontextTargetConnectionDict[SANINeuron2.SANIlayerNeuronID]
+					if(connection.weight >= SANInodeGenerationHFassociationThreshold):
+						addNodeToNextLayer = True
+						foundAssociation = True
+						if(not connection.SANInodeAssigned):
+							if(generateSANINetwork):
+								connection.SANInodeAssigned = True
+								layerNetworkIndex, nodeName = generateSANInodeName(layerIndex+1, layerNetworkIndex)
+								if(printVerbose):
+									print("create new conceptNode; ", nodeName)
+								nodeGraphType = graphNodeTypeSANIhidden
+								connection.SANInode = HopfieldNode(layerNetworkIndex, nodeName, nodeGraphType)
+								assignWindex(connection.SANInode, SANINeuron1, SANINeuron2)
+								connection.SANInode.SANIlayerIndex = layerIndex+1
+								connection.SANInode.SANIlayerNeuronID = layerNetworkIndex
+								if(checkNodeContiguity(SANINeuron1, SANINeuron2, False)):  
+									connection.SANIcontiguousInput = True
+								networkSANINodeList.append(connection.SANInode)
+								layerNetworkIndex += 1
+							else:
+								addToNextLayer = False
+						if(addNodeToNextLayer):
+							connection.SANIactivationState = True
+							connection.SANInode.SANIactivationState = True
+							sentenceSANINodeList.append(connection.SANInode)
 		if(enableSkipLayerConnectivity):
 			if(not foundAssociation):
 				sentenceSANINodeList.append(SANINeuron1)	#append unassociated node to buffer so that it can still be referenced in future layers
 				
 	SANIlayerList[layerIndex+1].sentenceSANINodeList = sentenceSANINodeList
 
+def assignWindex(SANInode, SANINeuron1, SANINeuron2):
+	wApprox = ((SANINeuron1.w + SANINeuron2.w)/2)
+	SANInode.w=wApprox
+	SANInode.wMin=SANINeuron1.w
+	SANInode.wMax=SANINeuron2.w
+								
+def checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList):
+	result = False
+	if(checkNonReplicateAssociation(x1, x2)):
+		if(checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex)):
+			if(checkNodeContiguity(SANINeuron1, SANINeuron2)):
+				if(checkNonContiguousAssociationContents(SANINeuron1, SANINeuron2, layerBufferSANINodeList)):
+					result = True
+	return result
+
+def checkNonReplicateAssociation(x1, x2):
+	result = False
+	if(x1 != x2 and x2 > x1):	#x2 > x1; ensures that replicate SANI nodes are not added to network (with input swapped)
+		result = True	
+	return result
+	
 def checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex):
 	result = False
 	if(enableSkipLayerConnectivity):
@@ -143,11 +168,38 @@ def checkSkipLayerConnectivity(SANINeuron1, SANINeuron2, layerIndex):
 	else:
 		result = True
 	return result
-	
-def checkNonReplicateAssociation(x1, x2):
+
+def checkNodeContiguity(SANINeuron1, SANINeuron2, supportPermutationInvariance=HFassociationPermutationInvariance):
+	wContiguityChecks = False
+	if(supportPermutationInvariance):
+		wContiguityChecks = True
+	else:	#wContiguityEnforced
+		if(SANINeuron1.wMax+1 == SANINeuron2.wMin):
+			wContiguityChecks = True
+	return wContiguityChecks	
+
+def checkNonContiguousAssociationContents(SANINeuron1, SANINeuron2, layerBufferSANINodeList):
+	result = True
+	if(enableNextWordCausalPredictionsPermutationInvariance):
+		for node in layerBufferSANINodeList:
+			if(not node.SANIcontiguousInput):
+				candidateInNodeWindexWindow1 = candidateInNodeWindexCentralWindow(SANINeuron1, node)
+				candidateInNodeWindexWindow2 = candidateInNodeWindexCentralWindow(SANINeuron2, node)
+				if(candidateInNodeWindexWindow1 or candidateInNodeWindexWindow2):
+					if(candidateInNodeWindexWindow1 and candidateInNodeWindexWindow2):
+						if(SANINeuron1.wMin == node.wMin+1):	#CHECKTHIS; +1
+							SANINeuron1.noncontinguousInputNodeAboveCentralContentsStart = True
+						if(SANINeuron2.wMax == node.wMax-1):	#CHECKTHIS; -1
+							SANINeuron1.noncontinguousInputNodeAboveCentralContentsEnd = True
+							SANINeuron1.noncontinguousInputNodeAbove = node
+					else:
+						result = False
+	return result
+
+def candidateInNodeWindexCentralWindow(candidateNode, nonContiguousNode):
 	result = False
-	if(x1 != x2 and x2 > x1):	#x2 > x1; ensures that replicate SANI nodes are not added to network (with input swapped)
-		result = True	
+	if((candidateNode.wMin > nonContiguousNode.wMin) and (candidateNode.wMax < nonContiguousNode.wMax)):	#CHECKTHIS; >= <=
+		result = True
 	return result
 	
 def checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK):
@@ -159,15 +211,6 @@ def checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK):
 		associationTopKChecks = True
 	return associationTopKChecks
 	
-def checkNodeContiguity(SANINeuron1, SANINeuron2):
-	wContiguityChecks = False
-	if(HFassociationPermutationInvariance):
-		wContiguityChecks = True
-	else:	#wContiguityEnforced
-		if(SANINeuron1.w+1 == SANINeuron2.w):
-			wContiguityChecks = True
-	return wContiguityChecks	
-			
 def generateSANInodeName(layerIndex, layerNetworkIndex):
 	nodeName = "l" + str(layerIndex) + "n" + str(layerNetworkIndex)
 	return layerNetworkIndex, nodeName
