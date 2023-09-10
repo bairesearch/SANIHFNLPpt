@@ -7,10 +7,10 @@ Richard Bruce Baxter - Copyright (c) 2023 Baxter AI (baxterai.com)
 MIT License
 
 # Installation:
-see HFNLPpy_main.py
+see SANIHFNLPpy_main.py
 
 # Usage:
-see HFNLPpy_main.py
+see SANIHFNLPpy_main.py
 
 # Description:
 SANIHFNLP Layered SANI Draw - draw sentence/network SANI graph
@@ -121,14 +121,14 @@ def drawLayeredSANIGraphNetwork(SANIlayerList, activationTime=None, wTarget=None
 			drawLayeredSANIGraphNodeConnections(layerIndex, nodeIndex, SANINode, drawGraphNetwork)
 
 def drawLayeredSANIGraphNodeConnections(layerIndex, nodeIndex, layeredSANIGraphNode, drawGraphNetwork, sentenceSANINodeList=None):
-	for connectionKey, connection in layeredSANIGraphNode.HFcontextTargetConnectionDict.items():
+	for connectionKey, connection in layeredSANIGraphNode.HFcontextTargetConnectionLayeredDict.items():
 		drawHFGraphConnection(layerIndex, connection, drawGraphNetwork, sentenceSANINodeList)
 		if(connection.SANInodeAssigned):
 			if(drawGraphNetwork or connection.SANIactivationState):
 				if(drawGraphNetwork or ((connection.nodeSource in sentenceSANINodeList) and (connection.nodeTarget in sentenceSANINodeList))):
 					drawLayeredSANIGraphConnection(connection, connection.nodeSource, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
 					drawLayeredSANIGraphConnection(connection, connection.nodeTarget, connection.SANInode, drawGraphNetwork, sentenceSANINodeList)
-	for connectionKey, connection in layeredSANIGraphNode.HFcausalTargetConnectionDict.items():
+	for connectionKey, connection in layeredSANIGraphNode.HFcausalTargetConnectionLayeredDict.items():
 		drawHFGraphConnection(layerIndex, connection, drawGraphNetwork, sentenceSANINodeList)
 	#for outputNode in layeredSANIGraphNode.SANIoutputNodeList:
 	#	drawLayeredSANIGraphConnection(layeredSANIGraphNode, outputNode, drawGraphNetwork, sentenceSANINodeList)
@@ -140,7 +140,7 @@ def drawLayeredSANIGraphNodeConnections(layerIndex, nodeIndex, layeredSANIGraphN
 		
 def drawLayeredSANIGraphNode(layerIndex, nodeIndex, SANINode, drawGraphNetwork):
 	#print("layerIndex = ", layerIndex)
-	#print("SANINode.nodeName = ", SANINode.nodeName)
+	#print("drawLayeredSANIGraphNode: SANINode.nodeName = ", SANINode.nodeName)
 	colorHtml = getActivationColor(SANINode, 'yellow', 'orange', 'blue', highlightPartialActivations=True)
 
 	posX = nodeIndex*SANINeuronIndexSeparation

@@ -21,15 +21,10 @@ printVerbose = True
 
 #select HFNLP algorithm;
 useAlgorithmLayeredSANIbiologicalSimulation = True
+useAlgorithmDendriticSANIbiologicalSimulation = True	#simulate sequential activation of dendritic input 
 useAlgorithmScanBiologicalSimulation = False
-useAlgorithmDendriticSANIbiologicalSimulation = False	#simulate sequential activation of dendritic input 
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticSANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
-
-if(useAlgorithmLayeredSANIbiologicalSimulation):
-	assignSingleConnectionBetweenUniqueConceptPair = True	#only 1 connection between each unique concept node; record connection strength
-else:
-	assignSingleConnectionBetweenUniqueConceptPair = False
 	
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANIbiologicalSimulation):

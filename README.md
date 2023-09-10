@@ -1,4 +1,4 @@
-# SANIHFNLPpt
+# SANIHFNLPpy
 
 ### Author
 
@@ -6,7 +6,7 @@ Richard Bruce Baxter - Copyright (c) 2023 Baxter AI (baxterai.com)
 
 ### Description
 
-Sequentially Activated Neuronal Input hopfield natural language processing (SANIHFNLP) for PyTorch - experimental
+Sequentially Activated Neuronal Input hopfield natural language processing (SANIHFNLP) for Python - experimental
 
 ### License
 
@@ -30,5 +30,5 @@ pip install benepar [required for SPNLPpy_syntacticalGraphConstituencyParserForm
 ### Execution
 ```
 source activate anntf2
-python3 SANIHFNLPpt_main.py
+python3 SANIHFNLPpy_main.py
 ```

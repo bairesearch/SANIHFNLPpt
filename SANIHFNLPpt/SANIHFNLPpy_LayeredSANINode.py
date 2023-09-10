@@ -7,10 +7,10 @@ Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 MIT License
 
 # Installation:
-see HFNLPpy_main.py
+see SANIHFNLPpy_main.py
 
 # Usage:
-see HFNLPpy_main.py
+see SANIHFNLPpy_main.py
 
 # Description:
 SANIHFNLP Layered SANI Node Classes
