@@ -29,7 +29,7 @@ def layeredSANINodePropertiesInitialisation(node):
 	node.SANIactivationState = False
 	node.activationStatePartial = False	#highlightPartialActivations only (incomplete)
 	#node.SANIsequentialInputActiveList = []	#records if sequential inputs are active
-	node.SANIinputNodeList = []	#sequential input nodes (lower layer)
+	node.SANIinputNodeList = []	#input nodes (lower layer)
 	node.SANIoutputNodeList = []	#output nodes (higher layer)
 	node.SANIcontiguousInput = False
 	
