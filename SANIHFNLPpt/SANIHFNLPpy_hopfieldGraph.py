@@ -47,11 +47,6 @@ if(drawHopfieldGraph):
 		import HFNLPpy_hopfieldGraphDraw as hopfieldGraphDrawNetwork
 
 
-'''
-HFconnectionGraph = None
-networkConceptNodeDict = {}
-networkSize = 0
-'''
 SANIlayerList = []
 for layerIndex in range(SANInumberOfLayersMax):
 	SANIlayerList.append(SANIHFNLPpy_LayeredSANINode.SANIlayer(layerIndex))
@@ -59,12 +54,17 @@ for layerIndex in range(SANInumberOfLayersMax):
 def generateHopfieldGraphNetwork(articles):
 	numberOfSentences = len(articles)
 
+	if(useHFconnectionMatrix):
+		HFNLPpy_hopfieldGraph.readHFconnectionMatrix()
+
 	if(seedHFnetworkSubsequence):
 		HFNLPpy_hopfieldGraph.verifySeedSentenceIsReplicant(articles, numberOfSentences)
 
 	for sentenceIndex, sentence in enumerate(articles):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
-		
+
+	if(useHFconnectionMatrix):
+		HFNLPpy_hopfieldGraph.writeHFconnectionMatrix()
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -85,6 +85,12 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 	#declare Hopfield graph nodes;	
 	HFNLPpy_hopfieldGraph.generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenceConceptNodeList)
 
+	if(useHFconnectionMatrix):
+		for conceptNode in sentenceConceptNodeList:	
+			HFNLPpy_hopfieldGraph.neuronNamelist.append(conceptNode.nodeName)
+			neuronID = conceptNode.networkIndex
+			HFNLPpy_hopfieldGraph.neuronIDdict[conceptNode.nodeName] = neuronID
+			
 	if(useAlgorithmLayeredSANIbiologicalSimulation):
 		for conceptNode in sentenceConceptNodeList:	
 			if(useAlgorithmLayeredSANIbiologicalSimulation):
@@ -101,6 +107,9 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			trainSentence = False
 			
 	if(trainSentence):
+		if(linkSimilarConceptNodesBagOfWords):
+			HFNLPpy_hopfieldGraph.addContextWordsToConnectionGraph(tokenisedSentence, sentenceConceptNodeList)
+						
 		#create Hopfield graph connections (non-useAlgorithmDendriticSANIbiologicalSimulation);
 		if(useAlgorithmLayeredSANIbiologicalSimulation):
 			sentenceSANINodeList = SANIHFNLPpy_LayeredSANI.updateLayeredSANIgraph(HFNLPpy_hopfieldGraph.networkConceptNodeDict, SANIlayerList, sentenceIndex)
@@ -111,7 +120,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 		#predict Hopfield graph flow;
 		seedSentenceConceptNodeList = sentenceConceptNodeList
 		if(useAlgorithmDendriticSANIbiologicalSimulation):
-			HFNLPpy_DendriticSANI.seedBiologicalHFnetwork(HFNLPpy_hopfieldGraph.networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)			
+			HFNLPpy_DendriticSANI.seedBiologicalHFnetwork(HFNLPpy_hopfieldGraph.networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences, HFconnectionGraphObject)			
 		else:
 			printe("SANIHFNLPpy_hopfieldGraph:generateHopfieldGraphSentence error: !trainSentence requires useAlgorithmDendriticSANIbiologicalSimulation")
 			
