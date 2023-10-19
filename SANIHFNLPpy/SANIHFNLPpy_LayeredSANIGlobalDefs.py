@@ -49,8 +49,8 @@ if(debugLowActivationThresholds):
 else:
 	SANInodeGenerationHFassociationThreshold = 10	#minimum association strength before generating SANI node
 
-if(useAlgorithmDendriticSANIbiologicalSimulation):
-	HFassociationPermutationInvariance = False	#non-contiguous SANI node input (limited enableBasicNextWordCausalPredictions implementation with t-intersection causal connections) is not currently supported by useAlgorithmDendriticSANIbiologicalSimulation
+if(useAlgorithmDendriticSANI):
+	HFassociationPermutationInvariance = False	#non-contiguous SANI node input (limited enableBasicNextWordCausalPredictions implementation with t-intersection causal connections) is not currently supported by useAlgorithmDendriticSANI
 else:
 	HFassociationPermutationInvariance = True	#permutation invariance provides functionality similar to attention/transformer layer (k.q measurement)	#else assume wContiguityEnforced (orig SANINLPc++/SANINLPtf algorithm)
 HFassociationStrengthProximityBias = True	#favour closer sentence nodes for generating SANI association (e.g. adjacent/contiguous)
@@ -65,8 +65,8 @@ enableBasicNextWordCausalPredictions = False
 enableNextWordCausalPredictionsPermutationInvariance = False
 
 if(enableSkipLayerConnectivity):
-	if(useAlgorithmDendriticSANIbiologicalSimulation):
-		enableBasicNextWordCausalPredictions = False	#not necessary (alternate/complex next word prediction algorithm is used by useAlgorithmDendriticSANIbiologicalSimulation that takes into account context)
+	if(useAlgorithmDendriticSANI):
+		enableBasicNextWordCausalPredictions = False	#not necessary (alternate/complex next word prediction algorithm is used by useAlgorithmDendriticSANI that takes into account context)
 	else:
 		enableBasicNextWordCausalPredictions = True		#enableBasicNextWordCausalPredictions does not properly support HFassociationPermutationInvariance (non-contiguous SANI node input)	#limited support for HFassociationPermutationInvariance
 	if(HFassociationPermutationInvariance):

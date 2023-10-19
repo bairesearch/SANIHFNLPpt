@@ -20,8 +20,8 @@ SANIHFNLP - global defs
 printVerbose = True
 
 #select SANIHFNLP algorithm options;
-from HFNLPpy_globalDefs import useAlgorithmLayeredSANIbiologicalSimulation	#mandatory
-from HFNLPpy_globalDefs import useAlgorithmDendriticSANIbiologicalSimulation	#optional	#simulate sequential activation of dendritic input across SANI nodes
+from HFNLPpy_globalDefs import useAlgorithmLayeredSANI	#mandatory
+from HFNLPpy_globalDefs import useAlgorithmDendriticSANI	#optional	#simulate sequential activation of dendritic input across SANI nodes
 	
 drawHopfieldGraph = False	#typically use drawBiologicalSimulation only
 	

@@ -218,7 +218,7 @@ def displayLayeredSANIGraph(plot=True, save=False, fileName=None):
 		else:
 			nx.draw(layeredSANIGraph, pos, with_labels=False, alpha=graphTransparency, node_size=nodeSizeDraw)
 
-	#if(useAlgorithmDendriticSANIbiologicalSimulation) exclusive code:
+	#if(useAlgorithmDendriticSANI) exclusive code:
 	#only assign labels to SANINeurons
 	labels = {}    
 	for node in layeredSANIGraph.nodes():
@@ -252,7 +252,7 @@ def getActivationColor(neuronObject, colorActiveNew, colorActive, colorInactive,
 	
 
 def generateLayeredSANIFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
-	fileName = "useAlgorithmDendriticSANIbiologicalSimulation"
+	fileName = "useAlgorithmDendriticSANI"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
 		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
