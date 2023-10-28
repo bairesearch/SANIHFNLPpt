@@ -67,12 +67,12 @@ def recordNextWordCausalPredictions(layerBufferSANINodeListSorted):
 		if(x1 > 0):
 			if(not SANINeuron.noncontinguousInputNodeAboveCentralContentsStart):
 				if(not connectionExists(SANINeuronPrev, SANINeuron, False)):
-					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuronPrev, SANINeuron, contextConnection=False)
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuronPrev, SANINeuron, contextConnection=False, useAlgorithmLayeredSANI=True)
 				connection = SANINeuronPrev.HFcausalTargetConnectionLayeredDict[SANINeuron.SANIlayerNeuronID]
 				connection.weight += 1
 			if(SANINeuron.noncontinguousInputNodeAboveCentralContentsEnd):
 				if(not connectionExists(SANINeuron, SANINeuron.noncontinguousInputNodeAbove, False)):
-					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron, SANINeuron.noncontinguousInputNodeAbove, contextConnection=False)
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron, SANINeuron.noncontinguousInputNodeAbove, contextConnection=False, useAlgorithmLayeredSANI=True)
 				connection = SANINeuron.HFcausalTargetConnectionLayeredDict[SANINeuron.noncontinguousInputNodeAbove.SANIlayerNeuronID]
 				connection.SANIoptionalCausalConnection = True
 				connection.weight += 1
@@ -91,7 +91,7 @@ def updateLayeredSANIlayerStandard(networkConceptNodeDict, SANIlayerList, layerI
 		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
 			if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
 				if(not connectionExists(SANINeuron1, SANINeuron2, True)):
-					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2, contextConnection=True)
+					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2, contextConnection=True, useAlgorithmLayeredSANI=True)
 				connection = SANINeuron1.HFcontextTargetConnectionLayeredDict[SANINeuron2.SANIlayerNeuronID]
 				if(HFassociationStrengthProximityBias):
 					HFproximity = calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2)

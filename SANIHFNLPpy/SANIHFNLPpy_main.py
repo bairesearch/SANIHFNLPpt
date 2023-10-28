@@ -44,8 +44,10 @@ np.set_printoptions(threshold=sys.maxsize)
 
 import random
 import ANNtf2_loadDataset
-import SANIHFNLPpy_hopfieldGraph
-
+import HFNLPpy_hopfieldGraph
+from HFNLPpy_globalDefs import *
+if(tokeniseSubwords):
+	import HFNLPpy_dataTokeniser
 
 #HFNLP algorithm selection;
 algorithmHFNLP = "generateHopfieldNetwork"
@@ -89,7 +91,7 @@ def loadDataset(fileIndex, textualDatasetLoadPerformProcessing=True):
 	datasetNumFeatures = 0
 	datasetNumClasses = 0
 	
-	fileIndexStr = str(fileIndex).zfill(4)
+	fileIndexStr = str(fileIndex).zfill(datasetFileNameIndexDigits)
 	if(dataset == "POStagSequence"):
 		datasetType1FileNameX = dataset1FileNameXstart + fileIndexStr + datasetFileNameXend
 		datasetType1FileNameY = dataset1FileNameYstart + fileIndexStr + datasetFileNameYend
@@ -127,6 +129,11 @@ def loadDataset(fileIndex, textualDatasetLoadPerformProcessing=True):
 
 def trainSequentialInput(trainMultipleFiles=False):
 	
+	if(tokeniseSubwords):
+		tokenizer = HFNLPpy_dataTokeniser.initialiseTokeniser()
+	else:
+		tokenizer = None
+		
 	#if(algorithmHFNLP == "generateHopfieldNetwork"):
 	#	HFNLPpy_hopfieldNetwork.constructPOSdictionary()	#required for HFNLPpy_hopfieldNetwork:HFNLPtf_getAllPossiblePosTags.getAllPossiblePosTags(word)
 					
@@ -162,16 +169,16 @@ def trainSequentialInput(trainMultipleFiles=False):
 			#print("articles = ", articles)
 			#print("listDimensions(articles) = ", listDimensions(articles))
 
-			processingSimple(articles)
+			processingSimple(articles, tokenizer)
 					
 						
-def processingSimple(articles):
+def processingSimple(articles, tokenizer):
 	if(NLPsequentialInputTypeMaxWordVectors):
 		#flatten any higher level abstractions defined in NLPsequentialInputTypeMax down to word vector lists (sentences);
 		articles = ANNtf2_loadDataset.flattenNestedListToSentences(articles)
 
 	if(algorithmHFNLP == "generateHopfieldNetwork"):
-		articles = SANIHFNLPpy_hopfieldGraph.generateHopfieldGraphNetwork(articles)
+		articles = HFNLPpy_hopfieldGraph.generateHopfieldGraphNetwork(articles, tokenizer)
 	
 
 if __name__ == "__main__":
