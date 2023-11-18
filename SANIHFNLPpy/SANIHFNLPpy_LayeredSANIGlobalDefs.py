@@ -23,6 +23,16 @@ from HFNLPpy_globalDefs import *
 
 debugLowActivationThresholds = True
 
+#### SANI word vectors ####
+
+if(useAlgorithmMatrix):
+	SANIwordVectors = False	#default:True	#SANI nodes use compound word vectors instead of compound words	#requires HFconnectionMatrixAlgorithm
+else:
+	SANIwordVectors = False	#mandatory
+if(SANIwordVectors):
+	SANIwordVectorsTopK = 1	#number of top k compound word vectors to identify	#currently required to = 1
+	#currently requires algorithmMatrixTensorDim == 4
+	
 #### SANI hierarchy ####
 
 if(debugLowActivationThresholds):
@@ -45,10 +55,14 @@ if(selectActivatedTop):
 #### HF association strengths ####
 
 if(debugLowActivationThresholds):
-	SANInodeGenerationHFassociationThreshold = 2
+	if(SANIwordVectors):
+		SANInodeGenerationHFassociationThresholdWordVector = 1.0	#minimum SANI/compound node association threshold with candidate compound words
+	SANInodeGenerationHFassociationThreshold = 2	
 else:
+	if(SANIwordVectors):
+		SANInodeGenerationHFassociationThresholdWordVector = 1.0	#minimum SANI/compound node association threshold with candidate compound words
 	SANInodeGenerationHFassociationThreshold = 10	#minimum association strength before generating SANI node
-
+	
 useAlgorithmCausalNextWordPrediction = True	#required for useAlgorithmDendriticSANI/useAlgorithmDendriticMatrix/etc
 if(useAlgorithmCausalNextWordPrediction):
 	HFassociationPermutationInvariance = False	#non-contiguous SANI node input (limited enableBasicNextWordCausalPredictions implementation with t-intersection causal connections) is not currently supported by useAlgorithmDendriticSANI
@@ -80,7 +94,7 @@ outputFileNameComputationType = False
 
 #### draw ####
 
-drawBiologicalSimulation = True	#optional
+drawBiologicalSimulation = False	#optional
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationPlot = True	#default: True
 	drawBiologicalSimulationSave = False	#default: False	#save to file

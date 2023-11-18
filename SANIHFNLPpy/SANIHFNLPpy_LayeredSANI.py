@@ -31,19 +31,26 @@ from SANIHFNLPpy_LayeredSANIGlobalDefs import *
 import HFNLPpy_hopfieldOperations
 import SANIHFNLPpy_LayeredSANIDraw
 from HFNLPpy_hopfieldNodeClass import *
-
+if(SANIwordVectors):
+	from HFNLPpy_MatrixGlobalDefs import *
+	import HFNLPpy_Matrix
+	if(useHFconnectionMatrixBasic):
+		import HFNLPpy_ConceptsMatrixOperations
+	elif(useHFconnectionMatrixAlgorithm):
+		import HFNLPpy_MatrixOperations
+		
 if(drawBiologicalSimulation):
 	import SANIHFNLPpy_LayeredSANIDraw
 
-def updateLayeredSANIgraph(networkConceptNodeDict, SANIlayerList, sentenceIndex):
+def updateLayeredSANIgraph(HFconnectionGraphObject, networkConceptNodeDict, SANIlayerList, sentenceIndex):
 	for layerIndex, layer in enumerate(SANIlayerList):
 		if(layerIndex < SANInumberOfLayersMax):	#ensure that higher layer SANI nodes can still be added
 			#print("layerIndex = ", layerIndex)
 			if(layerIndex < SANInumberOfLayersMax-1):
 				if(vectoriseComputation):
-					updateLayeredSANIlayerVectorised(networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True)
+					updateLayeredSANIlayerVectorised(HFconnectionGraphObject, networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True)
 				else:
-					updateLayeredSANIlayerStandard(networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True)
+					updateLayeredSANIlayerStandard(HFconnectionGraphObject, networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True)
 			else:
 				layerBufferSANINodeListSorted = sortSANInodeList(layer.sentenceSANINodeList)
 				if(enableBasicNextWordCausalPredictions):
@@ -78,7 +85,7 @@ def recordNextWordCausalPredictions(layerBufferSANINodeListSorted):
 				connection.weight += 1
 		SANINeuronPrev = SANINeuron
 	
-def updateLayeredSANIlayerStandard(networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True):
+def updateLayeredSANIlayerStandard(HFconnectionGraphObject, networkConceptNodeDict, SANIlayerList, layerIndex, layer, generateSANINetwork=True):
 	layerBufferSANINodeList = layer.sentenceSANINodeList
 	#print("len(layerBufferSANINodeList) = ", len(layerBufferSANINodeList))
 	sentenceSANINodeList = []
@@ -89,32 +96,53 @@ def updateLayeredSANIlayerStandard(networkConceptNodeDict, SANIlayerList, layerI
 		if(selectActivatedTop):
 			layerSANINodeListAssociated = []
 		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
+			#print("1 updateLayeredSANIlayerStandard")
 			if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
 				if(not connectionExists(SANINeuron1, SANINeuron2, True)):
 					HFNLPpy_hopfieldOperations.addConnectionToNode(SANINeuron1, SANINeuron2, contextConnection=True, useAlgorithmLayeredSANI=True)
 				connection = SANINeuron1.HFcontextTargetConnectionLayeredDict[SANINeuron2.SANIlayerNeuronID]
+				if(selectActivatedTop):
+					foundSANIneuronCompound = False
+					if(SANIwordVectors):
+						foundNeuronCompound, SANINeuronCompound, SANINeuronCompoundWeight = findNeuronCompound(x1, layerBufferSANINodeList, HFconnectionGraphObject, networkConceptNodeDict, SANINeuron1, SANINeuron2)
+						if(foundNeuronCompound):
+							if(SANINeuronCompoundWeight > SANInodeGenerationHFassociationThresholdWordVector):
+								if(SANINeuronCompound.graphNodeType == graphNodeTypeSANIhidden):
+									layerSANINodeListAssociated.append(SANINeuronCompound)
+									SANINeuronCompound.wTemp = x2
+									SANINeuronCompound.weight = SANINeuronCompoundWeight	#temp artificial param	#TODO: SANINeuronCompound "weights" must be normalised wrt connection.weights
+									SANINeuronCompound.isSANIcompoundNode = True	#temp artificial param
+									foundSANIneuronCompound = True
+					if(not foundSANIneuronCompound):
+						if(connection.weight > SANInodeGenerationHFassociationThreshold):
+							layerSANINodeListAssociated.append(connection)
+							connection.nodeTarget.wTemp = x2	#temp artificial param
 				if(HFassociationStrengthProximityBias):
 					HFproximity = calculateHFproximity(layerBufferSANINodeList, SANINeuron1, SANINeuron2)
 					#print("HFproximity = ", HFproximity)
 					connection.weight += HFproximity
 				else:
 					connection.weight += 1
-				if(selectActivatedTop):
-					if(connection.weight > SANInodeGenerationHFassociationThreshold):
-						layerSANINodeListAssociated.append(connection)
 		if(selectActivatedTop):
 			layerSANINodeListAssociated.sort(key=lambda x: x.weight)
 			selectActivatedTopKChecked = min([selectActivatedTopK, len(layerSANINodeListAssociated)])
 			layerSANINodeListAssociated = layerSANINodeListAssociated[0:selectActivatedTopKChecked]
 			layerSANINodeListAssociatedTopK = []
-			for connection in layerSANINodeListAssociated:
-				layerSANINodeListAssociatedTopK.append(connection.nodeTarget)
+			for association in layerSANINodeListAssociated:
+				if(association.isSANIcompoundNode):
+					layerSANINodeListAssociatedTopK.append(association)
+				else:
+					layerSANINodeListAssociatedTopK.append(association.nodeTarget)
 		else:
-			layerSANINodeListAssociatedTopK = None
+			layerSANINodeListAssociatedTopK = layerBufferSANINodeList
 		foundAssociation = False
-		for x2, SANINeuron2 in enumerate(layerBufferSANINodeList):
-			if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
-				if(checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK)):
+		for SANINeuron2 in layerSANINodeListAssociatedTopK:
+			x2 = SANINeuron2.wTemp
+			if(SANINeuron2.isSANIcompoundNode):
+				sentenceSANINodeList.append(SANINeuron2)
+				SANINeuron2.isSANIcompoundNode = False
+			else:
+				if(checkValidAssociation(x1, x2, SANINeuron1, SANINeuron2, layerIndex, layerBufferSANINodeList)):
 					connection = SANINeuron1.HFcontextTargetConnectionLayeredDict[SANINeuron2.SANIlayerNeuronID]
 					if(connection.weight >= SANInodeGenerationHFassociationThreshold):
 						addNodeToNextLayer = True
@@ -141,6 +169,8 @@ def updateLayeredSANIlayerStandard(networkConceptNodeDict, SANIlayerList, layerI
 							connection.SANIactivationState = True
 							connection.SANInode.SANIactivationState = True
 							sentenceSANINodeList.append(connection.SANInode)
+						if(SANIwordVectors):
+							HFNLPpy_Matrix.addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, connection.SANInode)
 		if(enableSkipLayerConnectivity):
 			if(not foundAssociation):
 				sentenceSANINodeList.append(SANINeuron1)	#append unassociated node to buffer so that it can still be referenced in future layers
@@ -214,15 +244,6 @@ def candidateInNodeWindexCentralWindow(candidateNode, nonContiguousNode):
 		result = True
 	return result
 	
-def checkAssociationTopK(SANINeuron2, layerSANINodeListAssociatedTopK):
-	associationTopKChecks = False
-	if(selectActivatedTop):
-		if(SANINeuron2 in layerSANINodeListAssociatedTopK):
-			associationTopKChecks = True
-	else:
-		associationTopKChecks = True
-	return associationTopKChecks
-	
 def generateSANInodeName(SANINeuron1, SANINeuron2, layerIndex, layerNetworkIndex):
 	#nodeName = "l" + str(layerIndex) + "n" + str(layerNetworkIndex)
 	nodeName = SANINeuron1.nodeName + "_" + SANINeuron2.nodeName
@@ -262,4 +283,38 @@ def connectionExists(nodeSource, nodeTarget, contextConnection):
 		if(nodeTarget.SANIlayerNeuronID in nodeSource.HFcausalTargetConnectionLayeredDict):
 			result = True
 	return result
-		
+
+if(SANIwordVectors):
+	def findNeuronCompound(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, SANINeuron1, SANINeuron2):
+		foundNeuronCompound = False
+		SANINeuronCompound = None
+		SANINeuronCompoundWeight = None
+		if(useHFconnectionMatrixBasic):
+			compoundWordVector = calculateCompoundWordVectorBasic(HFconnectionGraphObject, SANINeuron1, SANINeuron2)
+			SANINeuronCompoundSet, SANINeuronCompoundWeight = getNearestWordVectorBasic(HFconnectionGraphObject, networkConceptNodeDict, compoundWordVector)
+		elif(useHFconnectionMatrixAlgorithm):
+			dendriticBranchIndex = None
+			secondDataIndex = None
+			secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+			weightStore = contextMatrixWeightStore
+			bidirectionalContext = False	#not supported for prediction
+			matrixTensorDim4 = (algorithmMatrixTensorDim == 4)
+			assert(matrixTensorDim4)
+			SANINeuronCompoundSet, SANINeuronCompoundWeight, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4, k=SANIwordVectorsTopK)
+		if(len(SANINeuronCompoundSet) > 0):
+			SANINeuronCompound = (list(SANINeuronCompoundSet))[0]	#only works with SANIwordVectorsTopK=1
+			foundNeuronCompound = True
+		return foundNeuronCompound, SANINeuronCompound, SANINeuronCompoundWeight
+
+	def calculateCompoundWordVectorBasic(HFconnectionGraphObject, SANINeuron1, SANINeuron2):
+		neuronID1 = HFconnectionGraphObject.neuronIDdict[SANINeuron1.nodeName]
+		neuronID2 = HFconnectionGraphObject.neuronIDdict[SANINeuron1.nodeName]
+		neuronWordVector1 = HFconnectionGraphObject[neuronID1]
+		neuronWordVector2 = HFconnectionGraphObject[neuronID2]
+		compoundWordVector = neuronWordVector1 + neuronWordVector2
+		return compoundWordVector
+
+	def getNearestWordVectorBasic(HFconnectionGraphObject, networkConceptNodeDict, compoundWordVector):
+		HFconnectionGraphBasicNormalised = HFconnectionGraphObject.HFconnectionGraphBasicNormalised	#more inefficient: HFconnectionGraphBasicNormalised = HFNLPpy_ConnectionMatrixBasic.normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphBasic)
+		SANINeuronCompoundSet, SANINeuronCompoundWeight, _ = HFNLPpy_ConceptsMatrixOperations.connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, compoundWordVector, SANIwordVectorsTopK)
+		return SANINeuronCompoundSet, SANINeuronCompoundWeight

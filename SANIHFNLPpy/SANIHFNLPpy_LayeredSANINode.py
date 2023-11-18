@@ -24,6 +24,7 @@ import random
 from SANIHFNLPpy_LayeredSANIGlobalDefs import *
 
 def layeredSANINodePropertiesInitialisation(node):
+	node.isSANIcompoundNode = False
 	node.SANIlayerNeuronID = 0
 	node.SANIlayerIndex = 0
 	node.SANIactivationState = False

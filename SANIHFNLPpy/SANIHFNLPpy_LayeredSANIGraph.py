@@ -25,7 +25,7 @@ SANIlayerList = []
 for layerIndex in range(SANInumberOfLayersMax):
 	SANIlayerList.append(SANIHFNLPpy_LayeredSANINode.SANIlayer(layerIndex))
 
-def generateLayeredSANIGraphSentence(sentenceIndex, tokenisedSentence, sentenceConceptNodeList, networkConceptNodeDict):	
+def generateLayeredSANIGraphSentence(HFconnectionGraphObject, sentenceIndex, tokenisedSentence, sentenceConceptNodeList, networkConceptNodeDict):	
 	
 	for conceptNode in sentenceConceptNodeList:	
 		conceptNode.SANIlayerNeuronID = conceptNode.networkIndex
@@ -34,6 +34,6 @@ def generateLayeredSANIGraphSentence(sentenceIndex, tokenisedSentence, sentenceC
 	SANIlayerList[0].networkSANINodeList = list(networkConceptNodeDict.values())
 	SANIlayerList[0].sentenceSANINodeList = sentenceConceptNodeList
 		
-	sentenceSANINodeList = SANIHFNLPpy_LayeredSANI.updateLayeredSANIgraph(networkConceptNodeDict, SANIlayerList, sentenceIndex)
+	sentenceSANINodeList = SANIHFNLPpy_LayeredSANI.updateLayeredSANIgraph(HFconnectionGraphObject, networkConceptNodeDict, SANIlayerList, sentenceIndex)
 	
 	return sentenceSANINodeList
