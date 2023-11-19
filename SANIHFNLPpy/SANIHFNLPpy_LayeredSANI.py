@@ -36,6 +36,7 @@ if(SANIwordVectors):
 	import HFNLPpy_Matrix
 	if(useHFconnectionMatrixBasic):
 		import HFNLPpy_ConceptsMatrixOperations
+		import HFNLPpy_ConnectionMatrixBasic
 	elif(useHFconnectionMatrixAlgorithm):
 		import HFNLPpy_MatrixOperations
 		
@@ -301,6 +302,8 @@ if(SANIwordVectors):
 			matrixTensorDim4 = (algorithmMatrixTensorDim == 4)
 			assert(matrixTensorDim4)
 			SANINeuronCompoundSet, SANINeuronCompoundWeight, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4, k=SANIwordVectorsTopK)
+		else:
+			printe("findNeuronCompound error: SANIwordVectors requires useHFconnectionMatrixBasic or useHFconnectionMatrixAlgorithm")
 		if(len(SANINeuronCompoundSet) > 0):
 			SANINeuronCompound = (list(SANINeuronCompoundSet))[0]	#only works with SANIwordVectorsTopK=1
 			foundNeuronCompound = True
@@ -309,9 +312,10 @@ if(SANIwordVectors):
 	def calculateCompoundWordVectorBasic(HFconnectionGraphObject, SANINeuron1, SANINeuron2):
 		neuronID1 = HFconnectionGraphObject.neuronIDdict[SANINeuron1.nodeName]
 		neuronID2 = HFconnectionGraphObject.neuronIDdict[SANINeuron1.nodeName]
-		neuronWordVector1 = HFconnectionGraphObject[neuronID1]
-		neuronWordVector2 = HFconnectionGraphObject[neuronID2]
+		neuronWordVector1 = HFconnectionGraphObject.HFconnectionGraphBasic[neuronID1]
+		neuronWordVector2 = HFconnectionGraphObject.HFconnectionGraphBasic[neuronID2]
 		compoundWordVector = neuronWordVector1 + neuronWordVector2
+		compoundWordVector = HFNLPpy_ConnectionMatrixBasic.normaliseBatchedTensor(compoundWordVector)
 		return compoundWordVector
 
 	def getNearestWordVectorBasic(HFconnectionGraphObject, networkConceptNodeDict, compoundWordVector):
